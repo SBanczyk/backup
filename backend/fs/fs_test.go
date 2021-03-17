@@ -1,13 +1,13 @@
 package fs_test
 
 import (
+	"github.com/SBanczyk/backup/backend"
+	"github.com/SBanczyk/backup/backend/fs"
+	"github.com/stretchr/testify/assert"
 	"io/ioutil"
 	"os"
 	"path"
 	"testing"
-	"github.com/SBanczyk/backup/backend"
-	"github.com/SBanczyk/backup/backend/fs"
-	"github.com/stretchr/testify/assert"
 )
 
 func TestFs(t *testing.T) {
@@ -49,7 +49,7 @@ func TestDownloadNotExist(t *testing.T) {
 }
 
 func TestRemoveNotExist(t *testing.T) {
-	_,_, backend := prepareBackend(t)
+	_, _, backend := prepareBackend(t)
 	err := backend.RemoveFile("cloudName")
 	assert.Error(t, err)
 }

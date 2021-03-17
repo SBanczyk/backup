@@ -13,10 +13,10 @@ type backend struct {
 	config fsConfig
 }
 
-func Init(localDir string, targetDir string,) (error) {
+func Init(localDir string, targetDir string) error {
 	sourceFileStat, err := os.Stat(targetDir)
 	if err != nil {
-		return  err
+		return err
 	}
 	if !sourceFileStat.IsDir() {
 		return fmt.Errorf("%s is not a directory", targetDir)
@@ -33,12 +33,12 @@ func Init(localDir string, targetDir string,) (error) {
 		return err
 	}
 	return nil
-	
+
 }
 
-func Load (localDir string) (*backend, error) {
+func Load(localDir string) (*backend, error) {
 	localConfig := path.Join(localDir, "fs_backend.config")
-	file,err := ioutil.ReadFile(localConfig)
+	file, err := ioutil.ReadFile(localConfig)
 	if err != nil {
 		return nil, err
 	}

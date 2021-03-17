@@ -6,7 +6,7 @@ import (
 	//"log"
 	"os"
 
-	//"github.com/SBanczyk/backup/backend/fs"
+	"github.com/SBanczyk/backup/commands"
 )
 
 func main() {
@@ -61,12 +61,17 @@ func main() {
 			initFsCommand.PrintDefaults()
 			os.Exit(1)
 		}
-		fmt.Printf("init fs: %s\n", *targetDirPtr)
-		/*err := fs.Init(*targetDirPtr)
+		wd, err := os.Getwd()
 		if err != nil {
-			log.Fatal(err)
+			fmt.Printf("%v", err)
+			os.Exit(1)
 		}
-		fmt.Printf("Removed: %v", *targetDirPtr)*/
+		err = commands.InitFs(wd, *targetDirPtr)
+		if err != nil {
+			fmt.Printf("%v", err)
+			os.Exit(1)
+		}
+
 	}
 
 	if initS3Command.Parsed() {
