@@ -1,5 +1,5 @@
 package fs
 
 type fsConfig struct {
-	targetDir string
+	TargetDir string
 }
