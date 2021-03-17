@@ -3,10 +3,10 @@ package main
 import (
 	"flag"
 	"fmt"
-	"log"
+	//"log"
 	"os"
 
-	"github.com/SBanczyk/backup/backend/fs"
+	//"github.com/SBanczyk/backup/backend/fs"
 )
 
 func main() {
@@ -62,15 +62,11 @@ func main() {
 			os.Exit(1)
 		}
 		fmt.Printf("init fs: %s\n", *targetDirPtr)
-		backend, err := fs.Init(*targetDirPtr)
+		/*err := fs.Init(*targetDirPtr)
 		if err != nil {
 			log.Fatal(err)
 		}
-		err = backend.UploadFile("downloaded", "uploaded")
-		if err != nil {
-			log.Fatal(err)
-		}
-		//fmt.Printf("Removed: %v", *targetDirPtr)
+		fmt.Printf("Removed: %v", *targetDirPtr)*/
 	}
 
 	if initS3Command.Parsed() {
