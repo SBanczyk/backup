@@ -11,7 +11,7 @@ type BackupPath struct {
 }
 
 type Backup struct {
-	Files map[string][]BackupPath
+	Files   map[string][]BackupPath
 	Version string
 }
 
