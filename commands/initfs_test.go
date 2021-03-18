@@ -52,7 +52,7 @@ func TestInitFsFileExist(t *testing.T) {
 	assert.Error(t, err)
 }
 
-func TestInitNoBackupFiles (t *testing.T) {
+func TestInitNoBackupFiles(t *testing.T) {
 	tempDir := t.TempDir()
 	localDir := path.Join(tempDir, "local")
 	backupDir := path.Join(tempDir, "backup")

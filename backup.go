@@ -83,8 +83,17 @@ func main() {
 	}
 
 	if backupCommand.Parsed() {
+		wd, err := os.Getwd()
+		if err != nil {
+			fmt.Printf("%v", err)
+			os.Exit(1)
+		}
 		if len(os.Args[2:]) != 0 {
-			fmt.Printf("backup: %s\n", os.Args[2:])
+			err = commands.AddToStaging(wd, os.Args[2:], false)
+			if err != nil {
+				fmt.Printf("%v", err)
+				os.Exit(1)
+			}
 		} else {
 			fmt.Printf("No arguments\n")
 		}
@@ -92,12 +101,20 @@ func main() {
 	}
 
 	if shadowCommand.Parsed() {
+		wd, err := os.Getwd()
+		if err != nil {
+			fmt.Printf("%v", err)
+			os.Exit(1)
+		}
 		if len(os.Args[2:]) != 0 {
-			fmt.Printf("shadow: %s\n", os.Args[2:])
+			err = commands.AddToStaging(wd, os.Args[2:], true)
+			if err != nil {
+				fmt.Printf("%v", err)
+				os.Exit(1)
+			}
 		} else {
 			fmt.Printf("No arguments\n")
 		}
-
 	}
 
 	if statusCommand.Parsed() {
