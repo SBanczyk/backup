@@ -33,6 +33,11 @@ func TestInit(t *testing.T) {
 	backupFilesContent, err := os.ReadFile(backupfilesFilePath)
 	assert.NoError(t, err)
 	assert.EqualValues(t, "123456", backupFilesContent)
+	stagingFilePath := path.Join(localDirPath, "staging")
+	stagingFileInfo, err := os.Stat(stagingFilePath)
+	assert.True(t, stagingFileInfo.Mode().IsRegular())
+	assert.NoError(t, err)
+
 }
 
 func TestInitFsFileExist(t *testing.T) {
@@ -45,4 +50,30 @@ func TestInitFsFileExist(t *testing.T) {
 	assert.NoError(t, os.Mkdir(backupDirPath, 0777))
 	err := commands.InitFs(localDir, backupDir)
 	assert.Error(t, err)
+}
+
+func TestInitNoBackupFiles (t *testing.T) {
+	tempDir := t.TempDir()
+	localDir := path.Join(tempDir, "local")
+	backupDir := path.Join(tempDir, "backup")
+	assert.NoError(t, os.Mkdir(localDir, 0777))
+	assert.NoError(t, os.Mkdir(backupDir, 0777))
+	err := commands.InitFs(localDir, backupDir)
+	assert.NoError(t, err)
+	localDirPath := path.Join(localDir, ".backup")
+	fileInfo, err := os.Stat(localDirPath)
+	assert.True(t, fileInfo.IsDir())
+	assert.NoError(t, err)
+	configPath := path.Join(localDirPath, "fs_backend.config")
+	backupfilesFilePath := path.Join(localDirPath, "backupfiles")
+	configPathInfo, err := os.ReadFile(configPath)
+	assert.NoError(t, err)
+	assert.True(t, strings.Contains(string(configPathInfo), backupDir))
+	backupfilesFileInfo, err := os.Stat(backupfilesFilePath)
+	assert.NoError(t, err)
+	assert.True(t, backupfilesFileInfo.Mode().IsRegular())
+	stagingFilePath := path.Join(localDirPath, "staging")
+	stagingFileInfo, err := os.Stat(stagingFilePath)
+	assert.True(t, stagingFileInfo.Mode().IsRegular())
+	assert.NoError(t, err)
 }

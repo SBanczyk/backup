@@ -6,6 +6,7 @@ import (
 	"path"
 
 	"github.com/SBanczyk/backup/backend/fs"
+	"github.com/SBanczyk/backup/model"
 )
 
 func InitFs(currentDir string, targetDir string) error {
@@ -21,17 +22,30 @@ func InitFs(currentDir string, targetDir string) error {
 	if err != nil {
 		return err
 	}
+	configDirPath := path.Join(configDir, "backupfiles")
 	downloadedFilePath, err := backend.DownloadBackupFilesFile()
 	if err != nil {
-		return err
+		if os.IsNotExist(err) {
+			err = model.SaveBackup(configDirPath, &model.Backup{})
+			if err != nil {
+				return err
+			}
+		} else {
+			return err
+		}
+	} else {
+		err = copyFile(downloadedFilePath, configDirPath)
+		if err != nil {
+			return err
+		}
 	}
-	configDirPath := path.Join(configDir, "backupfiles")
-	err = copyFile(downloadedFilePath, configDirPath)
+	stagingPath := path.Join(configDir, "staging")
+	err = model.SaveStaging(stagingPath, &model.Staging{})
 	if err != nil {
 		return err
 	}
-
 	return nil
+
 }
 
 func copyFile(src string, dst string) error {
