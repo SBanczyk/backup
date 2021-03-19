@@ -127,8 +127,17 @@ func main() {
 	}
 
 	if unstageCommand.Parsed() {
+		wd, err := os.Getwd()
+		if err != nil {
+			fmt.Printf("%v", err)
+			os.Exit(1)
+		}
 		if len(os.Args[2:]) != 0 {
-			fmt.Printf("unstage: %v\n", os.Args[2:])
+			err = commands.Unstage(wd, os.Args[2:])
+			if err != nil {
+				fmt.Printf("%v", err)
+				os.Exit(1)
+			}
 		} else {
 			fmt.Printf("No arguments\n")
 		}
