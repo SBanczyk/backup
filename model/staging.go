@@ -15,7 +15,7 @@ type Staging struct {
 	DestroyedFiles []string
 }
 
-func LoadStaging(path string) (backup *Staging, err error) {
+func LoadStaging(path string) (staging *Staging, err error) {
 	file, err := ioutil.ReadFile(path)
 	if err != nil {
 		return nil, err
