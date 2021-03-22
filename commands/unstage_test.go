@@ -1,8 +1,6 @@
 package commands_test
 
 import (
-	"os"
-	"path"
 	"testing"
 
 	"github.com/SBanczyk/backup/commands"
@@ -11,10 +9,7 @@ import (
 )
 
 func TestUnstage(t *testing.T) {
-	tempDir := t.TempDir()
-	stagingDir := path.Join(tempDir, ".backup")
-	assert.NoError(t, os.Mkdir(stagingDir, 0777))
-	stagingDir = path.Join(stagingDir, "staging")
+	localDir, _, stagingDir, _ := createDirs(t)
 	err := model.SaveStaging(stagingDir, &model.Staging{
 		StagingFiles: []model.StagingPath{{
 			Path:   "qwerty",
@@ -26,7 +21,7 @@ func TestUnstage(t *testing.T) {
 		DestroyedFiles: []string{"123456", "654321"},
 	})
 	assert.NoError(t, err)
-	err = commands.Unstage(tempDir, []string{"qwerty", "123456"})
+	err = commands.Unstage(localDir, []string{"qwerty", "123456"})
 	assert.NoError(t, err)
 	staging, err := model.LoadStaging(stagingDir)
 	assert.NoError(t, err)

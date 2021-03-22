@@ -12,14 +12,12 @@ import (
 )
 
 func TestBackup(t *testing.T) {
-	localDir, _, configDir := createDirs(t)
+	localDir, _, stagingPath, backupPath := createDirs(t)
 	someFilePath := createLocalFile(t, localDir, "someFile")
-	backupPath := path.Join(configDir, "backupfiles")
 	err := model.SaveBackup(backupPath, &model.Backup{})
 	assert.NoError(t, err)
 	firstFilePath := createLocalFile(t, localDir, "firstFile")
 	secondFilePath := createLocalFile(t, localDir, "secondFile")
-	stagingPath := path.Join(configDir, "staging")
 	err = model.SaveStaging(stagingPath, &model.Staging{
 		StagingFiles: []model.StagingPath{{
 			Path:   firstFilePath,
@@ -71,16 +69,18 @@ func TestBackup(t *testing.T) {
 		}, DestroyedFiles: []string{"654321"}}, staging)
 }
 
-func createDirs (t *testing.T,) (localdir string, backupdir string, configdir string) {
+func createDirs(t *testing.T) (localdir string, backupdir string, configdir string, backuppath string) {
 	t.Helper()
 	tempDir := t.TempDir()
 	localDir := path.Join(tempDir, "local")
 	backupDir := path.Join(tempDir, "backup")
 	configDir := path.Join(localDir, ".backup")
+	stagingPath := path.Join(configDir, "staging")
+	backupPath := path.Join(configDir, "backupfiles")
 	assert.NoError(t, os.Mkdir(localDir, 0777))
 	assert.NoError(t, os.Mkdir(backupDir, 0777))
 	assert.NoError(t, os.Mkdir(configDir, 0777))
-	return localDir, backupDir, configDir
+	return localDir, backupDir, stagingPath, backupPath
 }
 
 func createLocalFile(t *testing.T, localDir string, fileName string) string {

@@ -24,7 +24,7 @@ func Unstage(currentDir string, paths []string) error {
 }
 
 func removeFromStaging(slice []model.StagingPath, s string) []model.StagingPath {
-	var newSlice []model.StagingPath
+	newSlice := make([]model.StagingPath, 0)
 	for i := range slice {
 		if slice[i].Path != s {
 			newSlice = append(newSlice, slice[i])

@@ -68,7 +68,7 @@ func AddToStaging(currentDir string, paths []string, shadow bool) (err error) {
 }
 
 func removeFromDestroyed(slice []string, s string) []string {
-	var newSlice []string
+	newSlice := make([]string, 0)
 	for i := range slice {
 		if slice[i] != s {
 			newSlice = append(newSlice, slice[i])
@@ -91,7 +91,7 @@ func calculateHash(path string) (calculatedHash string, err error) {
 }
 
 func replaceInStaging(slice []model.StagingPath, s model.StagingPath) []model.StagingPath {
-	var newSlice []model.StagingPath
+	newSlice := make([]model.StagingPath, 0)
 	isFound := false
 	for i := range slice {
 		if slice[i].Path == s.Path {
