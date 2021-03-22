@@ -1,6 +1,9 @@
 package commands_test
 
 import (
+	"crypto/sha1"
+	"fmt"
+	"io"
 	"io/ioutil"
 	"os"
 	"path"
@@ -69,7 +72,7 @@ func TestBackup(t *testing.T) {
 		}, DestroyedFiles: []string{"654321"}}, staging)
 }
 
-func createDirs(t *testing.T) (localdir string, backupdir string, configdir string, backuppath string) {
+func createDirs(t *testing.T) (localdir string, backupdir string, stagingpath string, backuppath string) {
 	t.Helper()
 	tempDir := t.TempDir()
 	localDir := path.Join(tempDir, "local")
@@ -88,4 +91,59 @@ func createLocalFile(t *testing.T, localDir string, fileName string) string {
 	someFilePath := path.Join(localDir, fileName)
 	assert.NoError(t, ioutil.WriteFile(someFilePath, []byte(someFilePath), 0666))
 	return someFilePath
+}
+
+func TestAddToStagingHash (t *testing.T) {
+	localDir, _, stagingPath, backupPath := createDirs(t)
+	firstFilePath := createLocalFile(t, localDir, "firstFile")
+	secondFilePath := createLocalFile(t, localDir, "secondFile")
+	secondFileCalulated, err := calculateHash(secondFilePath)
+	assert.NoError(t, err)
+	err = model.SaveStaging(stagingPath, &model.Staging{
+		DestroyedFiles: []string{secondFilePath},
+	})
+	assert.NoError(t, err)
+	err = model.SaveBackup(backupPath, &model.Backup{
+		Files: map[string][]model.BackupPath{
+			"abcdef": {
+				{
+					Path:   firstFilePath,
+					Shadow: false,
+				},
+			},
+			secondFileCalulated: {
+				{
+					Path: secondFilePath,
+					Shadow: false,
+				},
+			},
+		},
+	})
+	assert.NoError(t, err)
+	err = commands.AddToStaging(localDir, []string{firstFilePath, secondFilePath}, true)
+	assert.NoError(t, err)
+	staging, err := model.LoadStaging(stagingPath)
+	assert.NoError(t, err)
+	assert.EqualValues(t, &model.Staging{
+		StagingFiles: []model.StagingPath{
+			{
+				Path: firstFilePath,
+				Shadow: true,
+			},
+		},
+		DestroyedFiles: []string{},
+	}, staging)
+}
+
+func calculateHash(path string) (calculatedHash string, err error) {
+	file, err := os.Open(path)
+	if err != nil {
+		return "", err
+	}
+	defer file.Close()
+	hash := sha1.New()
+	if _, err := io.Copy(hash, file); err != nil {
+		return "", err
+	}
+	return fmt.Sprintf("%x", hash.Sum(nil)), nil
 }
