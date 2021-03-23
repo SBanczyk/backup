@@ -1,6 +1,7 @@
 package commands_test
 
 import (
+	"os"
 	"path"
 	"testing"
 
@@ -16,7 +17,7 @@ func TestDestroy(t *testing.T) {
 		Files: map[string][]model.BackupPath{
 			"abcdef": {
 				{
-					Path:   firstFilePath,
+					Path:   "firstFile",
 					Shadow: false,
 				},
 			},
@@ -26,7 +27,7 @@ func TestDestroy(t *testing.T) {
 	err = model.SaveStaging(stagingPath, &model.Staging{
 		StagingFiles: []model.StagingPath{
 			{
-				Path:   firstFilePath,
+				Path:   "firstFile",
 				Shadow: false,
 			},
 		},
@@ -39,7 +40,36 @@ func TestDestroy(t *testing.T) {
 	assert.NoError(t, err)
 	assert.EqualValues(t, &model.Staging{
 		StagingFiles:   []model.StagingPath{},
-		DestroyedFiles: []string{firstFilePath},
+		DestroyedFiles: []string{"firstFile"},
 	}, staging)
 
+}
+
+func TestDestroyDeep(t *testing.T) {
+	localDir, _, stagingPath, backupPath := createDirs(t)
+	newDir := path.Join(localDir, "qwer", "qaz")
+	assert.NoError(t, os.MkdirAll(newDir, 0777))
+	firstFilePath := path.Join("qwer", "qaz", "firstFile")
+	err := model.SaveBackup(backupPath, &model.Backup{
+		Files: map[string][]model.BackupPath{
+			"abcdef": {
+				{
+					Path:   firstFilePath,
+					Shadow: false,
+				},
+			},
+		},
+	})
+	assert.NoError(t, err)
+	err = model.SaveStaging(stagingPath, &model.Staging{})
+	assert.NoError(t, err)
+	firstFileDir := createLocalFile(t, newDir, "firstFile")
+	err = commands.Destroy(newDir, []string{firstFileDir})
+	assert.NoError(t, err)
+	staging, err := model.LoadStaging(stagingPath)
+	assert.NoError(t, err)
+	assert.EqualValues(t, &model.Staging{
+		StagingFiles:   []model.StagingPath{},
+		DestroyedFiles: []string{firstFilePath},
+	}, staging)
 }

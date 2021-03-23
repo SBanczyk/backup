@@ -23,33 +23,32 @@ func TestBackup(t *testing.T) {
 	secondFilePath := createLocalFile(t, localDir, "secondFile")
 	err = model.SaveStaging(stagingPath, &model.Staging{
 		StagingFiles: []model.StagingPath{{
-			Path:   firstFilePath,
+			Path:   "firstFile",
 			Shadow: true,
 		}, {
 			Path:   "1qaz",
 			Shadow: false,
 		}},
-		DestroyedFiles: []string{secondFilePath, "654321"},
+		DestroyedFiles: []string{"secondFile", "654321"},
 	})
 	assert.NoError(t, err)
 	err = commands.AddToStaging(localDir, []string{someFilePath, firstFilePath}, false)
 	assert.NoError(t, err)
-
 	staging, err := model.LoadStaging(stagingPath)
 	assert.NoError(t, err)
 	assert.Len(t, staging.StagingFiles, 3)
 	assert.EqualValues(t, &model.Staging{
 		StagingFiles: []model.StagingPath{{
-			Path:   firstFilePath,
+			Path:   "firstFile",
 			Shadow: false,
 		}, {
 			Path:   "1qaz",
 			Shadow: false,
 		}, {
-			Path:   someFilePath,
+			Path:   "someFile",
 			Shadow: false,
 		},
-		}, DestroyedFiles: []string{secondFilePath, "654321"}}, staging)
+		}, DestroyedFiles: []string{"secondFile", "654321"}}, staging)
 	err = commands.AddToStaging(localDir, []string{someFilePath, secondFilePath}, true)
 	assert.NoError(t, err)
 	staging, err = model.LoadStaging(stagingPath)
@@ -57,19 +56,42 @@ func TestBackup(t *testing.T) {
 	assert.Len(t, staging.StagingFiles, 4)
 	assert.EqualValues(t, &model.Staging{
 		StagingFiles: []model.StagingPath{{
-			Path:   firstFilePath,
+			Path:   "firstFile",
 			Shadow: false,
 		}, {
 			Path:   "1qaz",
 			Shadow: false,
 		}, {
-			Path:   someFilePath,
+			Path:   "someFile",
 			Shadow: true,
 		}, {
-			Path:   secondFilePath,
+			Path:   "secondFile",
 			Shadow: true,
 		},
 		}, DestroyedFiles: []string{"654321"}}, staging)
+
+}
+
+func TestBackupDeep(t *testing.T) {
+	localDir, _, stagingPath, backupPath := createDirs(t)
+	err := model.SaveBackup(backupPath, &model.Backup{})
+	assert.NoError(t, err)
+	err = model.SaveStaging(stagingPath, &model.Staging{})
+	assert.NoError(t, err)
+	newDir := path.Join(localDir, "qwer", "qaz")
+	assert.NoError(t, os.MkdirAll(newDir, 0777))
+	firstFilePath := createLocalFile(t, newDir, "firstFile")
+	err = commands.AddToStaging(newDir, []string{firstFilePath}, true)
+	assert.NoError(t, err)
+	staging, err := model.LoadStaging(stagingPath)
+	assert.NoError(t, err)
+	firstFilePath = path.Join("qwer", "qaz", "firstFile")
+	assert.EqualValues(t, &model.Staging{
+		StagingFiles: []model.StagingPath{{
+			Path:   firstFilePath,
+			Shadow: true,
+		},
+		}, DestroyedFiles: []string{}}, staging)
 }
 
 func createDirs(t *testing.T) (localdir string, backupdir string, stagingpath string, backuppath string) {
@@ -93,27 +115,27 @@ func createLocalFile(t *testing.T, localDir string, fileName string) string {
 	return someFilePath
 }
 
-func TestAddToStagingHash (t *testing.T) {
+func TestAddToStagingHash(t *testing.T) {
 	localDir, _, stagingPath, backupPath := createDirs(t)
 	firstFilePath := createLocalFile(t, localDir, "firstFile")
 	secondFilePath := createLocalFile(t, localDir, "secondFile")
 	secondFileCalulated, err := calculateHash(secondFilePath)
 	assert.NoError(t, err)
 	err = model.SaveStaging(stagingPath, &model.Staging{
-		DestroyedFiles: []string{secondFilePath},
+		DestroyedFiles: []string{"secondFile"},
 	})
 	assert.NoError(t, err)
 	err = model.SaveBackup(backupPath, &model.Backup{
 		Files: map[string][]model.BackupPath{
 			"abcdef": {
 				{
-					Path:   firstFilePath,
+					Path:   "firstFile",
 					Shadow: false,
 				},
 			},
 			secondFileCalulated: {
 				{
-					Path: secondFilePath,
+					Path:   "secondFile",
 					Shadow: false,
 				},
 			},
@@ -127,7 +149,7 @@ func TestAddToStagingHash (t *testing.T) {
 	assert.EqualValues(t, &model.Staging{
 		StagingFiles: []model.StagingPath{
 			{
-				Path: firstFilePath,
+				Path:   "firstFile",
 				Shadow: true,
 			},
 		},
