@@ -6,22 +6,36 @@ import (
 	"io"
 	"os"
 	"path"
+	"path/filepath"
+	"strings"
 
 	"github.com/SBanczyk/backup/model"
 )
 
 func AddToStaging(currentDir string, paths []string, shadow bool) (err error) {
-	stagingPath := path.Join(currentDir, ".backup", "staging")
+	baseDir, err := checkBaseDir(currentDir)
+	if err != nil {
+		return err
+	}
+	stagingPath := path.Join(baseDir, ".backup", "staging")
 	staging, err := model.LoadStaging(stagingPath)
 	if err != nil {
 		return err
 	}
-	backupPath := path.Join(currentDir, ".backup", "backupfiles")
+	backupPath := path.Join(baseDir, ".backup", "backupfiles")
 	backup, err := model.LoadBackup(backupPath)
 	if err != nil {
 		return err
 	}
 	for i := range paths {
+		absPath, err := filepath.Abs(paths[i])
+		if err != nil {
+			return err
+		}
+		if !strings.HasPrefix(absPath, baseDir) {
+			fmt.Printf("File not in baseDir")
+			continue
+		}
 		pathsInfo, err := os.Stat(paths[i])
 		if err != nil {
 			fmt.Printf("%v", err)
@@ -32,20 +46,25 @@ func AddToStaging(currentDir string, paths []string, shadow bool) (err error) {
 			continue
 		}
 		isFound := false
+
+		pathRel, err := filepath.Rel(baseDir, absPath)
+		if err != nil {
+			return err
+		}
 		for k := range backup.Files {
 			for j := range backup.Files[k] {
-				if backup.Files[k][j].Path == paths[i] {
+				if backup.Files[k][j].Path == pathRel {
 					isFound = true
-					hash, err := calculateHash(backup.Files[k][j].Path)
+					hash, err := calculateHash(paths[i])
 					if err != nil {
 						return err
 					}
 					if hash == k {
-						staging.DestroyedFiles = removeFromDestroyed(staging.DestroyedFiles, backup.Files[k][j].Path)
+						staging.DestroyedFiles = removeFromDestroyed(staging.DestroyedFiles, pathRel)
 					} else {
-						staging.DestroyedFiles = removeFromDestroyed(staging.DestroyedFiles, backup.Files[k][j].Path)
+						staging.DestroyedFiles = removeFromDestroyed(staging.DestroyedFiles, pathRel)
 						staging.StagingFiles = replaceInStaging(staging.StagingFiles, model.StagingPath{
-							Path:   paths[i],
+							Path:   pathRel,
 							Shadow: shadow,
 						})
 					}
@@ -53,9 +72,9 @@ func AddToStaging(currentDir string, paths []string, shadow bool) (err error) {
 			}
 		}
 		if !isFound {
-			staging.DestroyedFiles = removeFromDestroyed(staging.DestroyedFiles, paths[i])
+			staging.DestroyedFiles = removeFromDestroyed(staging.DestroyedFiles, pathRel)
 			staging.StagingFiles = replaceInStaging(staging.StagingFiles, model.StagingPath{
-				Path:   paths[i],
+				Path:   pathRel,
 				Shadow: shadow,
 			})
 		}

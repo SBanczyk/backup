@@ -1,20 +1,35 @@
 package commands
 
 import (
+	"fmt"
 	"path"
+	"path/filepath"
 
 	"github.com/SBanczyk/backup/model"
 )
 
 func Unstage(currentDir string, paths []string) error {
-	stagingPath := path.Join(currentDir, ".backup", "staging")
+	baseDir, err := checkBaseDir(currentDir)
+	if err != nil {
+		return err
+	}
+	stagingPath := path.Join(baseDir, ".backup", "staging")
 	staging, err := model.LoadStaging(stagingPath)
 	if err != nil {
 		return err
 	}
 	for i := range paths {
-		staging.DestroyedFiles = removeFromDestroyed(staging.DestroyedFiles, paths[i])
-		staging.StagingFiles = removeFromStaging(staging.StagingFiles, paths[i])
+		absPath, err := filepath.Abs(paths[i])
+		if err != nil {
+			return err
+		}
+		pathRel, err := filepath.Rel(baseDir, absPath)
+		if err != nil {
+			return err
+		}
+		fmt.Printf("pathRel: %v\n", pathRel)
+		staging.DestroyedFiles = removeFromDestroyed(staging.DestroyedFiles, pathRel)
+		staging.StagingFiles = removeFromStaging(staging.StagingFiles, pathRel)
 	}
 	err = model.SaveStaging(stagingPath, staging)
 	if err != nil {
