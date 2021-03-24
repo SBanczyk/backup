@@ -15,11 +15,11 @@ func main() {
 	backupCommand := flag.NewFlagSet("backup", flag.ExitOnError)
 	shadowCommand := flag.NewFlagSet("shadow", flag.ExitOnError)
 	statusCommand := flag.NewFlagSet("status", flag.ExitOnError)
-	unstageCommand := flag.NewFlagSet("status", flag.ExitOnError)
-	destroyCommand := flag.NewFlagSet("status", flag.ExitOnError)
-	getCommand := flag.NewFlagSet("status", flag.ExitOnError)
-	pullCommand := flag.NewFlagSet("status", flag.ExitOnError)
-	pushCommand := flag.NewFlagSet("status", flag.ExitOnError)
+	unstageCommand := flag.NewFlagSet("unstage", flag.ExitOnError)
+	destroyCommand := flag.NewFlagSet("destroy", flag.ExitOnError)
+	getCommand := flag.NewFlagSet("get", flag.ExitOnError)
+	pullCommand := flag.NewFlagSet("pull", flag.ExitOnError)
+	pushCommand := flag.NewFlagSet("push", flag.ExitOnError)
 	targetDirPtr := initFsCommand.String("target-dir", "", "Target-dir")
 	bucketPtr := initS3Command.String("bucket-name", "", "Bucket-name")
 	apiKeyPtr := initS3Command.String("api-key", "", "api-key")
@@ -163,10 +163,19 @@ func main() {
 	}
 
 	if getCommand.Parsed() {
-		if len(os.Args[2:]) == 0 {
-			fmt.Printf("get\n")
+		wd, err := os.Getwd()
+		if err != nil {
+			fmt.Printf("%v", err)
+			os.Exit(1)
+		}
+		if len(os.Args[2:]) != 0 {
+			err = commands.Get(wd, os.Args[2:])
+			if err != nil {
+				fmt.Printf("%v", err)
+				os.Exit(1)
+			}
 		} else {
-			fmt.Printf("Too many arguments\n")
+			fmt.Printf("No arguments\n")
 		}
 
 	}
