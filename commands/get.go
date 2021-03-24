@@ -57,6 +57,20 @@ Loop:
 					_, err := os.Stat(absPath)
 					if err != nil {
 						if os.IsNotExist(err) {
+							parrentDir := filepath.Dir(absPath)
+							_, err := os.Stat(parrentDir)
+							if err != nil {
+								if os.IsNotExist(err) {
+									err = os.MkdirAll(parrentDir, 0777)
+									if err != nil {
+										fmt.Printf("%v", err)
+										continue Loop
+									}
+								} else {
+									fmt.Printf("%v", err)
+									continue Loop
+								}
+							}
 							err1 := backend.DownloadFile(z, absPath)
 							if err != nil {
 								fmt.Printf("%v", err1)
