@@ -103,6 +103,34 @@ func TestGetDifferentHash(t *testing.T) {
 	assert.EqualValues(t, localFilePath, newPathInfo)
 }
 
+func TestGetDeep(t *testing.T) {
+	localDir, backupDir, stagingPath, backupPath := initFsBackend(t)
+	err := model.SaveStaging(stagingPath, &model.Staging{})
+	assert.NoError(t, err)
+	localFilePath := createLocalFile(t, localDir, "localFile")
+	hash, err := calculateHash(localFilePath)
+	assert.NoError(t, err)
+	err = os.Rename(localFilePath, path.Join(backupDir, hash))
+	assert.NoError(t, err)
+	err = model.SaveBackup(backupPath, &model.Backup{
+		Files: map[string][]model.BackupPath{
+			hash: {
+				{
+					Path:   path.Join("x", "y", "secondFile"),
+					Shadow: true,
+				},
+			},
+		},
+	})
+	assert.NoError(t, err)
+	newPath := path.Join(localDir, "x", "y", "secondFile")
+	err = commands.Get(localDir, []string{newPath})
+	assert.NoError(t, err)
+	newPathInfo, err := os.ReadFile(newPath)
+	assert.NoError(t, err)
+	assert.EqualValues(t, localFilePath, newPathInfo)
+}
+
 func initFsBackend(t *testing.T) (localdir string, backupdir string, stagingpath string, backuppath string) {
 	t.Helper()
 	tempDir := t.TempDir()
