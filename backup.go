@@ -118,8 +118,17 @@ func main() {
 	}
 
 	if statusCommand.Parsed() {
+		wd, err := os.Getwd()
+		if err != nil {
+			fmt.Printf("%v", err)
+			os.Exit(1)
+		}
 		if len(os.Args[2:]) == 0 {
-			fmt.Printf("status\n")
+			err = commands.Status(wd)
+			if err != nil {
+				fmt.Printf("%v", err)
+				os.Exit(1)
+			}
 		} else {
 			fmt.Printf("Too many arguments\n")
 		}
