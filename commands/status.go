@@ -2,8 +2,10 @@ package commands
 
 import (
 	"fmt"
+	"io/fs"
 	"os"
 	"path"
+	"path/filepath"
 
 	"github.com/SBanczyk/backup/model"
 )
@@ -29,6 +31,7 @@ func Status(currentDir string) error {
 	displayDestroyedFile(*staging, *backup)
 	displayMissingFileFromBackup(baseDir, *staging, *backup)
 	displayModifiedUnstageFile(baseDir, *staging, *backup)
+	displayUntrackedFiles(baseDir, *staging, *backup)
 	return nil
 }
 
@@ -150,5 +153,45 @@ func displayModifiedUnstageFile(baseDir string, staging model.Staging, backup mo
 				fmt.Printf("Different hash: %v\n", backup.Files[i][k].Path)
 			}
 		}
+	}
+}
+
+func displayUntrackedFiles(baseDir string, staging model.Staging, backup model.Backup) {
+	err := filepath.WalkDir(baseDir, func(path string, d fs.DirEntry, err1 error) error {
+		if err1 != nil {
+			return err1
+		}
+		relPath, err := filepath.Rel(baseDir, path)
+		if err != nil {
+			return err
+		}
+		if relPath == ".backup" {
+			return fs.SkipDir
+		}
+		if d.IsDir() {
+			return nil
+		}
+		for i := range staging.StagingFiles {
+			if staging.StagingFiles[i].Path == relPath {
+				return nil
+			}
+		}
+		for i := range staging.DestroyedFiles {
+			if staging.DestroyedFiles[i] == relPath {
+				return nil
+			}
+		}
+		for i := range backup.Files {
+			for k := range backup.Files[i] {
+				if backup.Files[i][k].Path == relPath {
+					return nil
+				}
+			}
+		}
+		fmt.Printf("Untracked file: %v\n", relPath)
+		return nil
+	})
+	if err != nil {
+		fmt.Printf("%v\n", err)
 	}
 }
